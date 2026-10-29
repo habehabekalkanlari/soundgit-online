@@ -10,7 +10,3 @@ export async function GET(req: NextRequest) {
   const memories = await memoryPool.getAll()
   return NextResponse.json({ memories, count: memories.length, info: 'SoundGit Hafıza Havuzu v22 - Kod yazmadan! PondOS v16-v21.2' })
 }
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  return NextResponse.json({ success: true, message: 'Hafıza havuzuna eklendi (local)', item: body })
-}
