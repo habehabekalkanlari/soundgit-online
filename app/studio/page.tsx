@@ -6,47 +6,100 @@ type Track = { id: string, file_name: string, file_url: string, created_at: stri
 function getLayaForFile(fileName: string) {
   const lower = fileName.toLowerCase()
   let genre='other', prob=0.5, bpm=124, key='F#m', daw='WAV', branch='main'
-  if (lower.endsWith('.als')) daw='【entity-Ableton¦canonical_name=Ableton】 Live'
-  else if (lower.endsWith('.logicx')) daw='【entity-Logic¦canonical_name=Logic】 Pro'
-  else if (lower.endsWith('.flp')) daw='【entity-FL Studio¦canonical_name=FL Studio】'
+  if (lower.endsWith('.als')) daw=' 【entity-Ableton¦canonical_name=Ableton】 Live'
+  else if (lower.endsWith('.logicx')) daw=' 【entity-Logic¦canonical_name=Logic】 Pro'
+  else if (lower.endsWith('.flp')) daw=' 【entity-FL Studio¦canonical_name=FL Studio】'
   else if (lower.endsWith('.cpr')) daw='Cubase'
   else if (lower.endsWith('.zip')) daw='Stems'
   if (lower.includes('techno')||lower.includes('strange')||lower.includes('adana')) { genre='techno'; prob=0.727; bpm=124; key='F#m' }
   return { genre, prob, bpm, key, daw, branch: lower.includes('vocal')?'vocal':'main' }
 }
-function Waveform({ url, comments }: { url: string, comments: { time: number, user: string, text: string }[] }) {
+function WaveformPlayer({ url, comments }: { url: string, comments: { time: number, user: string, text: string }[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const animationRef = useRef<number>(0)
+  const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [current, setCurrent] = useState(0)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const [freqData, setFreqData] = useState<number[]>(Array(64).fill(0))
   useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return
+    const audio = audioRef.current
+    if (!audio) return
+    const onTimeUpdate = () => setCurrent(audio.currentTime)
+    const onLoaded = () => setDuration(audio.duration)
+    const onEnded = () => setIsPlaying(false)
+    audio.addEventListener('timeupdate', onTimeUpdate)
+    audio.addEventListener('loadedmetadata', onLoaded)
+    audio.addEventListener('ended', onEnded)
+    return () => { audio.removeEventListener('timeupdate', onTimeUpdate); audio.removeEventListener('loadedmetadata', onLoaded); audio.removeEventListener('ended', onEnded) }
+  }, [])
+  const initAudioContext = async () => {
+    if (audioContextRef.current) return
+    const audio = audioRef.current; if (!audio) return
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const analyser = ctx.createAnalyser()
+    analyser.fftSize = 128
+    const source = ctx.createMediaElementSource(audio)
+    source.connect(analyser)
+    analyser.connect(ctx.destination)
+    audioContextRef.current = ctx
+    analyserRef.current = analyser
+  }
+  const togglePlay = async () => {
+    const audio = audioRef.current; if (!audio) return
+    await initAudioContext()
+    if (audioContextRef.current?.state === 'suspended') await audioContextRef.current.resume()
+    if (isPlaying) { audio.pause(); setIsPlaying(false) }
+    else { await audio.play(); setIsPlaying(true); draw() }
+  }
+  const draw = () => {
+    const canvas = canvasRef.current; const analyser = analyserRef.current
+    if (!canvas || !analyser) { animationRef.current = requestAnimationFrame(draw); return }
     const ctx = canvas.getContext('2d'); if (!ctx) return
     const w = canvas.width, h = canvas.height
+    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+    analyser.getByteFrequencyData(dataArray)
+    setFreqData(Array.from(dataArray).slice(0,64))
     ctx.clearRect(0,0,w,h)
-    ctx.fillStyle = '#333'
-    for (let i=0;i<w;i+=4) {
-      const height = Math.random()*h*0.8 + h*0.1
-      ctx.fillRect(i, (h-height)/2, 2, height)
+    const barWidth = w / dataArray.length * 2.5
+    let x = 0
+    for (let i=0;i<dataArray.length;i++) {
+      const barHeight = (dataArray[i] / 255) * h * 0.8
+      const isCurrentPos = Math.abs((current/duration)*w - x) < 5
+      ctx.fillStyle = isCurrentPos ? '#ff5500' : `hsl(${120 + dataArray[i]}, 80%, 50%)`
+      ctx.fillRect(x, (h-barHeight)/2, barWidth-1, barHeight)
+      x += barWidth
     }
+    ctx.fillStyle = 'rgba(255,85,0,0.15)'
+    ctx.fillRect(0,0,(current/(duration||1))*w,h)
+    ctx.fillStyle = '#ff5500'
+    ctx.fillRect((current/(duration||1))*w -1,0,2,h)
     comments.forEach(c => {
-      const x = (c.time / (duration || 200)) * w
+      const cx = (c.time / (duration||200)) * w
       ctx.fillStyle = '#ff5500'
-      ctx.beginPath(); ctx.arc(x, h/2, 6, 0, Math.PI*2); ctx.fill()
+      ctx.beginPath(); ctx.arc(cx, h/2, 6, 0, Math.PI*2); ctx.fill()
+      ctx.fillStyle = 'white'; ctx.font='9px monospace'; ctx.fillText(c.user, cx+8, h/2-10)
     })
-    ctx.fillStyle = 'rgba(255,85,0,0.3)'
-    ctx.fillRect(0,0,(current/(duration||200))*w,h)
-  }, [duration, current, comments])
+    if (isPlaying) animationRef.current = requestAnimationFrame(draw)
+  }
+  useEffect(() => { if (isPlaying) draw(); else cancelAnimationFrame(animationRef.current) }, [isPlaying, current])
+  const seek = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current; const audio = audioRef.current; if (!canvas || !audio) return
+    const rect = canvas.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const pct = x / rect.width
+    audio.currentTime = pct * (audio.duration||duration)
+    setCurrent(pct*(audio.duration||duration))
+  }
   return (
     <div className="relative w-full">
-      <canvas ref={canvasRef} width={600} height={80} className="w-full h-20 bg-[#1a1a1a] cursor-pointer" onClick={e => {
-        const rect = e.currentTarget.getBoundingClientRect()
-        const x = e.clientX - rect.left
-        const pct = x / rect.width
-        if (audioRef.current) { audioRef.current.currentTime = pct * (audioRef.current.duration||200); setCurrent(pct*(audioRef.current.duration||200)) }
-      }} />
-      <div className="flex justify-between text-[10px] text-zinc-500 mt-1"><span>{Math.floor(current/60)}:{String(Math.floor(current%60)).padStart(2,'0')}</span><span>{Math.floor(duration/60)}:{String(Math.floor(duration%60)).padStart(2,'0')}</span></div>
-      <audio ref={audioRef} src={url} onTimeUpdate={e => setCurrent(e.currentTarget.currentTime)} onLoadedMetadata={e => setDuration(e.currentTarget.duration)} className="hidden" />
+      <canvas ref={canvasRef} width={800} height={100} className="w-full h-24 bg-[#0a0a0a] cursor-pointer border border-[#222] rounded" onClick={seek} />
+      <div className="flex justify-between text-[11px] text-zinc-400 mt-1 font-mono"><span>{Math.floor(current/60)}:{String(Math.floor(current%60)).padStart(2,'0')} / {Math.floor(duration/60)}:{String(Math.floor(duration%60)).padStart(2,'0')}</span><span className="flex gap-1">{freqData.slice(0,8).map((f,i) => <span key={i} className="w-1 h-3 bg-[#ff5500]" style={{ height: `${(f/255)*16+2}px` }}></span>)} Freq: {freqData[0]}Hz</span></div>
+      <audio ref={audioRef} src={url} preload="metadata" crossOrigin="anonymous" />
+      <button onClick={togglePlay} className="absolute top-2 left-2 w-10 h-10 rounded-full bg-[#ff5500] hover:bg-[#ff6600] flex items-center justify-center text-white font-bold text-lg shadow-lg">{isPlaying ? '❚❚' : '▶'}</button>
+      <div className="absolute top-2 right-2 text-[10px] px-2 py-0.5 bg-black/70 rounded text-white">{isPlaying ? '● LIVE' : '○ PAUSED'} {Math.floor((current/duration)*100)||0}%</div>
     </div>
   )
 }
@@ -90,7 +143,7 @@ export default function Studio() {
       setTracks(unique)
       if (unique.length>0) setLayaFromFile(unique[0].file_name, unique[0].file_url)
       const initLikes: Record<string, number> = {}; const initPlays: Record<string, number> = {}; const initComments: Record<string, any[]> = {}
-      unique.forEach((t: Track) => { initLikes[t.id] = Math.floor(Math.random()*200); initPlays[t.id] = Math.floor(Math.random()*5000); initComments[t.id] = [{ time: 22, user: 'habehabe', text: '🔥 drop!' }, { time: 85, user: 'pondos', text: 'nice mix' }] })
+      unique.forEach((t: Track) => { initLikes[t.id] = 134+Math.floor(Math.random()*50); initPlays[t.id] = 4670+Math.floor(Math.random()*1000); initComments[t.id] = [{ time: 22, user: 'habehabe', text: '🔥 drop!' }, { time: 85, user: 'pondos', text: 'nice mix @2:22' }] })
       setLikes(initLikes); setPlays(initPlays); setComments(initComments)
     }
   }
@@ -109,113 +162,72 @@ export default function Studio() {
   }
   const addComment = (trackId: string) => {
     const text = newComment[trackId]; if (!text) return
-    const time = Math.random()*100
+    const time = Math.random()*120
     setComments(prev => ({ ...prev, [trackId]: [...(prev[trackId]||[]), { time, user: user?.email?.split('@')[0]||'you', text }] }))
     setNewComment(prev => ({ ...prev, [trackId]: '' }))
   }
   const handleDelete = async (id: string) => { if (!confirm('Silinsin mi?')) return; await fetch(`/api/tracks?id=${id}`, { method: 'DELETE' }); fetchTracks() }
   const handleLogout = () => { localStorage.removeItem('soundgit_user'); router.push('/') }
-  const addFriend = () => { const name = prompt('Arkadas ismi?'); if (name) setFriends([...meta.friends, name]) }
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Yukleniyor... v20 【entity-SoundCloud¦canonical_name=SoundCloud】...</div>
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">v20.1 Real Audio...</div>
   if (!user) return null
   return (
     <div className="min-h-screen bg-[#111] text-white">
-      <div className="bg-[#333] border-b border-[#222] px-6 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-6"><span className="font-bold text-lg">SOUNDGIT</span><span className="text-xs text-zinc-400">Home Feed Library</span></div>
-        <div className="flex items-center gap-4"><span className="text-xs">{user.email}</span><button onClick={handleLogout} className="px-3 py-1 bg-[#555] rounded text-xs">Cikis</button></div>
-      </div>
-      <div className="max-w-[1200px] mx-auto p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">SOUNDGIT STUDIO v20 SoundCloud UI</h1>
-          <p className="text-xs text-zinc-500">PondOS v20 - SoundCloud gibi - Waveform + Comments + Cover - {meta.friends.length} friends</p>
-        </div>
-        <div className="grid md:grid-cols-4 gap-3 mb-6">
-          <div className="p-3 bg-[#222] rounded"><h3 className="text-xs font-bold mb-1">DAW Upload - v20</h3><div className="flex flex-wrap gap-1 text-[10px]"><span className="px-1.5 py-0.5 bg-[#333] rounded"> 【entity-Ableton¦canonical_name=Ableton】 .als</span><span className="px-1.5 py-0.5 bg-[#333] rounded"> 【entity-Logic¦canonical_name=Logic】 .logicx</span><span className="px-1.5 py-0.5 bg-[#333] rounded">Cubase .cpr</span><span className="px-1.5 py-0.5 bg-[#333] rounded">FL .flp</span></div></div>
-          <div className="p-3 bg-[#222] rounded"><h3 className="text-xs font-bold mb-1">Knolli Laya</h3><p className="text-[11px]">{laya.genre} {laya.bpm} BPM {laya.key} {Math.round(laya.prob*100)}% - {laya.daw}</p></div>
-          <div className="p-3 bg-[#222] rounded"><h3 className="text-xs font-bold mb-1">Friends</h3><div className="flex gap-1 text-[9px]">{meta.friends.map((f,i) => <span key={i} className="px-1.5 py-0.5 bg-green-900/50 rounded">{f}</span>)}</div></div>
-          <div className="p-3 bg-[#222] rounded"><h3 className="text-xs font-bold mb-1">Privacy</h3><select value={meta.privacy} onChange={e => setPrivacy(e.target.value as any)} className="w-full px-2 py-1 bg-black border border-zinc-700 rounded text-[11px]"><option value="private">Private</option><option value="friends_only">Friends only</option><option value="public">Public</option></select></div>
-        </div>
-        <div className="mb-6 p-4 bg-[#222] rounded border border-dashed border-zinc-700">
-          <input type="file" accept=".wav,.mp3,.flac,.ogg,.als,.logicx,.flp,.cpr,.rpp,.zip" onChange={handleUpload} disabled={uploading} className="block w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-black file:text-xs" />
-          <p className="text-[10px] text-zinc-500 mt-2">Ableton Logic Cubase FL - SoundCloud UI - Waveform + Cover + Comments</p>
-          {uploading && <p className="text-yellow-400 text-xs mt-1">Yükleniyor...</p>}
-        </div>
-        <div className="space-y-6">
+      <div className="max-w-[1280px] mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-1">SOUNDGIT STUDIO v20.1 Real Play + Waveform</h1>
+        <p className="text-xs text-zinc-500 mb-6">PondOS v20.1 - Real time waveform, freq, play - 【entity-SoundCloud¦canonical_name=SoundCloud】 gibi - {tracks.length} tracks</p>
+        <div className="space-y-8">
           {tracks.map((track) => {
             const tl = getLayaForFile(track.file_name)
             const trackComments = comments[track.id] || []
             return (
-              <div key={track.id} className="bg-[#2a2a2a] rounded overflow-hidden">
-                <div className="p-4 bg-gradient-to-r from-[#3a3a3a] to-[#2a2a2a] flex gap-4">
-                  <button className="w-14 h-14 rounded-full bg-[#ff5500] flex items-center justify-center text-2xl">▶</button>
+              <div key={track.id} className="bg-[#1e1e1e] rounded-lg overflow-hidden border border-[#2a2a2a]">
+                <div className="p-5 flex gap-5">
                   <div className="flex-1">
-                    <h2 className="font-bold text-lg truncate">{track.file_name.replace(/^\d+-/, '')}</h2>
-                    <p className="text-xs text-zinc-400">{user.email?.split('@')[0]} • {tl.genre} • {tl.daw} • {new Date(track.created_at).toLocaleDateString()} • {tl.branch}</p>
-                    <div className="mt-4">
-                      <Waveform url={track.file_url} comments={trackComments} />
-                      <div className="flex gap-2 mt-1">
-                        {trackComments.map((c,i) => (
-                          <div key={i} className="text-[10px] px-1.5 py-0.5 bg-[#444] rounded flex items-center gap-1">
-                            <span className="w-3 h-3 rounded-full bg-[#ff5500]"></span>{c.user}: {c.text} @{Math.floor(c.time)}s
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-[#ff5500] flex items-center justify-center text-white">♫</div>
+                      <div><h2 className="font-bold text-base">{track.file_name.replace(/^\d+-/, '')}</h2><p className="text-xs text-zinc-400">{user.email?.split('@')[0]} • {tl.genre} • {tl.daw} • {new Date(track.created_at).toLocaleDateString()}</p></div>
                     </div>
+                    <WaveformPlayer url={track.file_url} comments={trackComments} />
                     <div className="flex items-center gap-2 mt-4">
-                      <button onClick={() => setLikes(prev => ({ ...prev, [track.id]: (prev[track.id]||0)+1 }))} className="px-3 py-1.5 bg-[#333] hover:bg-[#444] rounded text-xs flex items-center gap-1">❤️ {likes[track.id]||0}</button>
-                      <div className="flex-1 flex items-center gap-2">
-                        <input value={newComment[track.id]||''} onChange={e => setNewComment(prev => ({ ...prev, [track.id]: e.target.value }))} onKeyDown={e => e.key==='Enter' && addComment(track.id)} placeholder="Write a comment at current time" className="flex-1 px-3 py-1.5 bg-[#1a1a1a] border border-[#444] rounded text-xs" />
-                        <button onClick={() => addComment(track.id)} className="px-3 py-1.5 bg-[#ff5500] rounded text-xs">→</button>
-                      </div>
-                      <button className="px-2 py-1.5 bg-[#333] rounded text-xs">↗ Share</button>
-                      <button onClick={() => { navigator.clipboard.writeText(track.file_url); alert('Link copied!') }} className="px-2 py-1.5 bg-[#333] rounded text-xs">🔗 Copy Link</button>
-                      <button className="px-2 py-1.5 bg-[#333] rounded text-xs">+ Add to playlist</button>
-                      <button onClick={() => handleDelete(track.id)} className="px-2 py-1.5 bg-red-900/30 rounded text-xs">Sil</button>
+                      <button onClick={() => setLikes(prev => ({ ...prev, [track.id]: (prev[track.id]||0)+1 }))} className="px-3 py-1.5 bg-[#2a2a2a] hover:bg-[#333] border border-[#333] rounded text-xs flex gap-1">❤️ {likes[track.id]||0}</button>
+                      <input value={newComment[track.id]||''} onChange={e => setNewComment(prev => ({ ...prev, [track.id]: e.target.value }))} onKeyDown={e => e.key==='Enter' && addComment(track.id)} placeholder="Write a comment - real time marker ekle" className="flex-1 px-3 py-1.5 bg-[#0a0a0a] border border-[#333] rounded text-xs" />
+                      <button onClick={() => addComment(track.id)} className="px-3 py-1.5 bg-[#ff5500] hover:bg-[#ff6600] rounded text-xs font-bold">Comment</button>
+                      <button className="px-2 py-1.5 bg-[#2a2a2a] rounded text-xs">↗ Share</button>
+                      <button onClick={() => { navigator.clipboard.writeText(track.file_url); alert('Copied!') }} className="px-2 py-1.5 bg-[#2a2a2a] rounded text-xs">🔗 Copy</button>
+                      <button className="px-2 py-1.5 bg-[#2a2a2a] rounded text-xs">+ Playlist</button>
+                      <button onClick={() => handleDelete(track.id)} className="px-2 py-1.5 bg-red-900/20 rounded text-xs">Sil</button>
                     </div>
-                  </div>
-                  <div className="w-48 h-48 bg-gradient-to-br from-[#ff5500] to-[#ffaa00] rounded flex items-center justify-center relative">
-                    <div className="w-20 h-20 rounded-full bg-black/30"></div>
-                    <div className="absolute bottom-2 left-2 text-[9px] text-black/60">{tl.genre} {tl.bpm}</div>
-                    <div className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 bg-black/50 rounded">{tl.daw}</div>
-                  </div>
-                </div>
-                <div className="p-4 bg-[#1a1a1a] flex gap-6">
-                  <div className="flex-1">
-                    <h4 className="text-xs font-bold mb-2 text-zinc-400">DETAILS</h4>
-                    <p className="text-xs text-zinc-300">{track.file_name} - Laya analiz: {tl.genre} {Math.round(tl.prob*100)}% BPM {tl.bpm} Key {tl.key} - DAW {tl.daw} - Branch {tl.branch} - {meta.privacy} - Git gibi version control!</p>
-                    <p className="text-xs text-[#ff5500] mt-2">@{user.email?.split('@')[0]}</p>
-                    <h4 className="text-xs font-bold mt-6 mb-2 text-zinc-400">{trackComments.length} COMMENTS</h4>
-                    <div className="space-y-2">
+                    <div className="mt-4 flex gap-2">
                       {trackComments.map((c,i) => (
-                        <div key={i} className="flex gap-2 text-xs">
-                          <div className="w-6 h-6 rounded-full bg-[#333]"></div>
-                          <div><span className="font-bold">{c.user}</span> <span className="text-zinc-500">at {Math.floor(c.time)}s</span><p className="text-zinc-300">{c.text}</p></div>
-                        </div>
+                        <span key={i} className="text-[10px] px-2 py-1 bg-[#2a2a2a] rounded border border-[#333]">● {c.user} @{Math.floor(c.time)}s: {c.text}</span>
                       ))}
                     </div>
                   </div>
-                  <div className="w-64 space-y-3">
-                    <div className="bg-[#222] p-3 rounded">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-[#444]"></div>
-                        <div><p className="text-xs font-bold">{user.email?.split('@')[0]}</p><p className="text-[10px] text-zinc-500">{tracks.length} tracks • {meta.friends.length} friends</p></div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 py-1.5 bg-white text-black rounded text-xs font-bold">Follow</button>
-                        <button className="flex-1 py-1.5 bg-[#333] rounded text-xs">Message</button>
+                  <div className="w-56">
+                    <div className="w-56 h-56 bg-gradient-to-br from-[#ff5500] via-[#ff3300] to-[#ffaa00] rounded-lg flex items-center justify-center relative shadow-xl">
+                      <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur"></div>
+                      <div className="absolute inset-0 flex items-center justify-center"><span className="text-[10px] bg-black/60 px-2 py-1 rounded text-white">{tl.genre} {tl.bpm}</span></div>
+                      <div className="absolute top-2 right-2 text-[10px] px-2 py-1 bg-black/60 rounded text-white">{tl.daw}</div>
+                      <div className="absolute bottom-2 left-2 right-2"><div className="h-1 bg-black/30 rounded overflow-hidden"><div className="h-full bg-[#ff5500] w-3/4"></div></div></div>
+                    </div>
+                    <div className="mt-3 bg-[#0a0a0a] p-3 rounded border border-[#222]">
+                      <div className="flex items-center gap-2 mb-2"><div className="w-8 h-8 rounded-full bg-[#333]"></div><div><p className="text-xs font-bold">{user.email?.split('@')[0]}</p><p className="text-[10px] text-zinc-500">{tracks.length} tracks</p></div></div>
+                      <div className="grid grid-cols-3 gap-2 text-center mt-3">
+                        <div><p className="text-sm font-bold">{plays[track.id]||4670}</p><p className="text-[9px] text-zinc-500">PLAYS</p></div>
+                        <div><p className="text-sm font-bold">{likes[track.id]||134}</p><p className="text-[9px] text-zinc-500">LIKES</p></div>
+                        <div><p className="text-sm font-bold">{Math.floor((likes[track.id]||134)/8)}</p><p className="text-[9px] text-zinc-500">REPOSTS</p></div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="bg-[#222] p-2 rounded"><p className="text-sm font-bold">{plays[track.id]||0}</p><p className="text-[9px] text-zinc-500">PLAYS</p></div>
-                      <div className="bg-[#222] p-2 rounded"><p className="text-sm font-bold">{likes[track.id]||0}</p><p className="text-[9px] text-zinc-500">LIKES</p></div>
-                      <div className="bg-[#222] p-2 rounded"><p className="text-sm font-bold">{Math.floor((likes[track.id]||0)/10)}</p><p className="text-[9px] text-zinc-500">REPOSTS</p></div>
-                    </div>
-                    <div className="bg-[#222] p-2 rounded text-[10px] text-zinc-500">FANS WHO PLAYED MOST - Friends only download!</div>
                   </div>
                 </div>
               </div>
             )
           })}
+        </div>
+        <div className="mt-8 p-4 bg-[#1a1a1a] rounded border border-dashed border-zinc-700">
+          <h3 className="text-sm font-bold mb-2">🎛️ DAW Upload - Real Play v20.1</h3>
+          <input type="file" accept=".wav,.mp3,.flac,.ogg,.als,.logicx,.flp,.cpr,.zip" onChange={handleUpload} disabled={uploading} className="block w-full text-xs text-zinc-400 file:mr-3 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-black file:text-xs" />
+          <p className="text-[10px] text-zinc-500 mt-2">Ableton Logic Cubase FL - Real waveform + freq - Play çalışıyor!</p>
         </div>
       </div>
     </div>
