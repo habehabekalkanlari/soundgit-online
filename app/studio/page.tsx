@@ -1,22 +1,15 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useKnolli } from "@/lib/knolli"
 type Track = { id: string, file_name: string, file_url: string, created_at: string }
-function getDAW(fileName: string) {
-  const ext = fileName.split('.').pop()?.toLowerCase()
-  if (ext === 'als') return '【entity-Ableton¦canonical_name=Ableton】'
-  if (ext === 'logicx') return '【entity-Logic¦canonical_name=Logic】'
-  if (ext === 'flp') return 'FL'
-  if (ext === 'zip') return 'Stems'
-  return 'WAV'
-}
 export default function Studio() {
   const [tracks, setTracks] = useState<Track[]>([])
   const [uploading, setUploading] = useState(false)
-  const [privacy, setPrivacy] = useState("friends_only")
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const { laya, 【entity-meta¦canonical_name=Meta】, setLayaFromFile, setPrivacy, setFriends, setOwner } = useKnolli()
   useEffect(() => {
     const checkAuth = () => {
       const hash = window.location.hash
@@ -27,25 +20,23 @@ export default function Studio() {
           if (token) {
             const payload = JSON.parse(atob(token.split('.')[1]))
             const u = { email: payload.email, avatar: payload.user_metadata?.avatar_url }
-            setUser(u)
-            localStorage.setItem('soundgit_user', JSON.stringify(u))
+            setUser(u); setOwner(payload.email); localStorage.setItem('soundgit_user', JSON.stringify(u))
             window.history.replaceState(null, '', window.location.pathname)
-            setLoading(false)
-            fetch('/api/tracks').then(r => r.json()).then(j => j.tracks && setTracks(j.tracks))
-            return
+            setLoading(false); fetchTracks(); return
           }
         } catch {}
       }
       const saved = localStorage.getItem('soundgit_user')
       if (saved) {
-        try { setUser(JSON.parse(saved)); setLoading(false); fetch('/api/tracks').then(r => r.json()).then(j => j.tracks && setTracks(j.tracks)) } 
+        try { const u = JSON.parse(saved); setUser(u); setOwner(u.email); setLoading(false); fetchTracks() } 
         catch { localStorage.clear(); router.push('/') }
-      } else {
-        router.push('/')
-      }
+      } else { router.push('/') }
     }
     checkAuth()
   }, [router])
+  const fetchTracks = async () => {
+    const res = await fetch('/api/tracks'); const j = await res.json(); if (j.tracks) setTracks(j.tracks)
+  }
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return; setUploading(true)
     try {
@@ -54,27 +45,81 @@ export default function Studio() {
       const j = await res.json(); 
       await fetch(j.signedUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
       const publicUrl = `https://rvuiklogpbknbqvizddv.supabase.co/storage/v1/object/public/tracks/${j.path}`
+      setLayaFromFile(file.name, publicUrl)
       await fetch('/api/tracks', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ file_name: file.name, file_url: publicUrl }) })
-      const r = await fetch('/api/tracks'); const d = await r.json(); d.tracks && setTracks(d.tracks)
+      fetchTracks()
     } catch (err: any) { alert(err.message) } finally { setUploading(false); e.target.value = '' }
   }
   const handleLogout = () => { localStorage.removeItem('soundgit_user'); router.push('/') }
-  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Yukleniyor... Google auth kontrol...</div>
+  const addFriend = () => {
+    const name = prompt('Arkadas ismi?'); if (name) setFriends([...【entity-meta¦canonical_name=Meta】.friends, name])
+  }
+  if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Yukleniyor... Knolli sync...</div>
   if (!user) return null
   return (
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <div><h1 className="text-4xl font-bold mb-2">SOUNDGIT STUDIO v18.1 Auth + Social + Privacy</h1><p className="text-xs text-zinc-500">PondOS v18.1 - {user.email} - Auth guard + Friends + Private + DAW - 412G free</p></div>
+          <div><h1 className="text-4xl font-bold mb-2">SOUNDGIT STUDIO v19 Knolli</h1><p className="text-xs text-zinc-500">PondOS v19 Knolli - {user.email} - Laya {laya.genre} {laya.bpm} BPM {laya.key} - 【entity-Meta¦canonical_name=Meta】 {【entity-meta¦canonical_name=Meta】.privacy} - Branch {【entity-meta¦canonical_name=Meta】.branch} - 412G free</p></div>
           <div className="flex gap-2 items-center">{user.avatar && <img src={user.avatar} alt="avatar" className="w-8 h-8 rounded-full" />}<span className="text-xs">{user.email}</span><button onClick={handleLogout} className="px-3 py-1 bg-zinc-800 rounded text-xs">Cikis</button></div>
         </div>
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-zinc-900 rounded border border-zinc-800"><h3 className="font-bold text-sm mb-2">Friends - Sadece arkadaslar download</h3><div className="flex gap-2 text-xs"><span className="px-2 py-1 bg-green-900/50 rounded">habehabe</span><span className="px-2 py-1 bg-green-900/50 rounded">pondos</span><span className="px-2 py-1 bg-green-900/50 rounded">adana_twins</span></div><p className="text-[10px] text-zinc-600 mt-2">Non-friends goremez!</p></div>
-          <div className="p-4 bg-zinc-900 rounded border border-zinc-800"><h3 className="font-bold text-sm mb-2">Privacy - Private by default</h3><select value={privacy} onChange={e => setPrivacy(e.target.value)} className="w-full px-2 py-1 bg-black border border-zinc-700 rounded text-xs"><option value="private">Private - Sadece ben</option><option value="friends_only">Friends only</option><option value="public">Public</option></select></div>
-          <div className="p-4 bg-zinc-900 rounded border border-zinc-800"><h3 className="font-bold text-sm mb-2">DAW Upload - Ableton Logic FL</h3><p className="text-xs text-zinc-400">.als .logicx .flp .zip 50MB</p></div>
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
+          <div className="p-4 bg-zinc-900 rounded border border-green-800/50">
+            <h3 className="font-bold text-sm mb-2 text-green-400">Knolli Laya - Auto</h3>
+            <p className="text-xs">Genre: <span className="text-white font-bold">{laya.genre}</span> {Math.round(laya.prob*100)}%</p>
+            <p className="text-xs">BPM: {laya.bpm} | Key: {laya.key}</p>
+            <p className="text-xs">DAW: {laya.daw}</p>
+            <p className="text-xs">Energy: {laya.energy} | Dance: {laya.danceability}</p>
+          </div>
+          <div className="p-4 bg-zinc-900 rounded border border-blue-800/50">
+            <h3 className="font-bold text-sm mb-2 text-blue-400">Knolli Meta - Auto</h3>
+            <p className="text-xs truncate">File: {meta.file_name || 'yok'}</p>
+            <p className="text-xs">Branch: <span className="px-1 bg-zinc-800 rounded">{meta.branch}</span></p>
+            <p className="text-xs">Privacy: {meta.privacy}</p>
+            <p className="text-[10px] text-zinc-600 mt-1">Laya'dan auto sync!</p>
+          </div>
+          <div className="p-4 bg-zinc-900 rounded border border-zinc-800">
+            <h3 className="font-bold text-sm mb-2">Friends - Knolli</h3>
+            <div className="flex gap-1 flex-wrap text-[10px]">{meta.friends.map((f,i) => <span key={i} className="px-2 py-1 bg-green-900/50 rounded">{f}</span>)}</div>
+            <button onClick={addFriend} className="mt-2 px-2 py-1 bg-zinc-800 rounded text-[10px]">+ Arkadas Ekle</button>
+          </div>
+          <div className="p-4 bg-zinc-900 rounded border border-zinc-800">
+            <h3 className="font-bold text-sm mb-2">Privacy - Knolli</h3>
+            <select value={meta.privacy} onChange={e => setPrivacy(e.target.value as any)} className="w-full px-2 py-1 bg-black border border-zinc-700 rounded text-xs">
+              <option value="private">Private - Sadece ben</option>
+              <option value="friends_only">Friends only</option>
+              <option value="public">Public</option>
+            </select>
+            <p className="text-[10px] text-zinc-600 mt-1">Knolli sync!</p>
+          </div>
         </div>
-        <div className="mb-6 p-4 bg-zinc-900 rounded border border-zinc-800"><input type="file" accept=".wav,.mp3,.flac,.ogg,.als,.logicx,.flp,.zip" onChange={handleUpload} disabled={uploading} className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-black" /><p className="text-[10px] text-zinc-600 mt-2">Privacy: {privacy} - DAW upload - Sadece arkadaslar indirebilir - AUTH GUARD AKTIF!</p>{uploading && <p className="text-yellow-400 mt-2 text-xs">Yukleniyor...</p>}</div>
-        <div className="grid gap-4"><h3 className="font-bold">Tracks ({tracks.length}) - Friends only download</h3>{tracks.map((track) => (<div key={track.id} className="p-4 bg-zinc-900 rounded border border-zinc-800"><p className="font-mono text-sm truncate">{track.file_name}</p><div className="flex gap-2 mt-2"><span className="text-[10px] px-2 py-0.5 bg-zinc-800 rounded">{getDAW(track.file_name)}</span><span className="text-[10px] px-2 py-0.5 bg-green-900/50 rounded">{privacy}</span></div><audio controls src={track.file_url} className="w-full mt-3" /><div className="flex gap-2 mt-3"><button className="px-3 py-1 bg-white text-black rounded text-xs font-bold">Download friends only</button><button className="px-3 py-1 bg-zinc-800 rounded text-xs">Comment</button><button className="px-3 py-1 bg-zinc-800 rounded text-xs">Branch</button></div><p className="text-[10px] text-zinc-600 mt-2">{new Date(track.created_at).toLocaleString()}</p></div>))}</div>
+        <div className="mb-6 p-4 bg-zinc-900 rounded border border-zinc-800">
+          <h3 className="font-bold text-sm mb-2">Knolli Upload - Laya + Meta auto sync!</h3>
+          <input type="file" accept=".wav,.mp3,.flac,.ogg,.als,.logicx,.flp,.zip" onChange={handleUpload} disabled={uploading} className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-white file:text-black" />
+          <p className="text-[10px] text-zinc-600 mt-2">Knolli: {laya.genre} {laya.bpm} BPM {laya.daw} - Branch {meta.branch} - {meta.privacy} - Sadece arkadaslar indirebilir - AUTH GUARD!</p>
+          {uploading && <p className="text-yellow-400 mt-2 text-xs">Knolli sync... Yukleniyor...</p>}
+        </div>
+        <div className="grid gap-4">
+          <h3 className="font-bold">Tracks ({tracks.length}) - Knolli managed</h3>
+          {tracks.map((track) => (
+            <div key={track.id} className="p-4 bg-zinc-900 rounded border border-zinc-800">
+              <p className="font-mono text-sm truncate">{track.file_name}</p>
+              <div className="flex gap-2 mt-2">
+                <span className="text-[10px] px-2 py-0.5 bg-zinc-800 rounded">{laya.daw}</span>
+                <span className="text-[10px] px-2 py-0.5 bg-green-900/50 rounded">{meta.privacy}</span>
+                <span className="text-[10px] px-2 py-0.5 bg-blue-900/50 rounded">Branch {meta.branch}</span>
+                <span className="text-[10px] px-2 py-0.5 bg-zinc-800 rounded">{laya.genre} {laya.bpm}</span>
+              </div>
+              <audio controls src={track.file_url} className="w-full mt-3" />
+              <div className="flex gap-2 mt-3">
+                <button className="px-3 py-1 bg-white text-black rounded text-xs font-bold">Download {meta.privacy}</button>
+                <button className="px-3 py-1 bg-zinc-800 rounded text-xs">Comment {meta.branch}</button>
+                <button className="px-3 py-1 bg-zinc-800 rounded text-xs">Branch Switch</button>
+              </div>
+              <p className="text-[10px] text-zinc-600 mt-2">{new Date(track.created_at).toLocaleString()} - Knolli: {laya.genre} - {meta.privacy}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
