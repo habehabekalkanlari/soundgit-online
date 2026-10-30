@@ -20,6 +20,8 @@ export default function Studio() {
   const [audioError, setAudioError] = useState<string | null>(null);
   const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [parsedResults, setParsedResults] = useState<any[]>([]);
+  const [collabScores, setCollabScores] = useState<any>({ vocal: 82, energy: 76, groove: 88, drop: 72, bass: 79, drums: 85, overall: 80 });
 
   useEffect(() => {
     setMounted(true);
