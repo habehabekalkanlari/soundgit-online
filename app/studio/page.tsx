@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import UploadZone from "@/app/components/UploadZone";
 import SoundCloudWaveform from "@/app/components/SoundCloudWaveform";
+import MixTimeline from "@/app/components/MixTimeline";
 import ScoreBoxAnalytics from "@/app/components/ScoreBoxAnalytics";
 import LFM3OmniAssistant from "@/app/components/LFM3OmniAssistant";
 export default function StudioPage() {
@@ -160,7 +161,7 @@ export default function StudioPage() {
               </>
             )}
             {activeTab==='pool' && <div className="text-[11px] opacity-40">Pool • {uploadedFiles.length} files</div>}
-            {activeTab==='mix' && <div className="text-[11px] opacity-40">Mix timeline</div>}
+            {activeTab==='mix' && <MixTimeline files={uploadedFiles} parsed={parsedResults} bpm={parsedResults[0]?.bpm || 128} currentTime={currentTime} duration={duration} onSeek={setCurrentTime} />}
           </div>
         </div>
         {/* Right - fixed width, flex col, no extra space */}
