@@ -6,8 +6,8 @@ type Track = { id: string, file_name: string, file_url: string, created_at: stri
 function getLayaForFile(fileName: string) {
   const lower = fileName.toLowerCase()
   let genre='other', bpm=124, key='F#m', daw='WAV', color='#00ff88'
-  if (lower.endsWith('.als')) { daw=' Ableton'; color='#00ff88' }
-  else if (lower.endsWith('.logicx')) { daw=' Logic'; color='#0088ff' }
+  if (lower.endsWith('.als')) { daw=' 【entity-Ableton¦canonical_name=Ableton】'; color='#00ff88' }
+  else if (lower.endsWith('.logicx')) { daw=' 【entity-Logic¦canonical_name=Logic】'; color='#0088ff' }
   else if (lower.endsWith('.flp')) { daw='FL'; color='#ff0088' }
   if (lower.includes('techno')) { genre='techno'; color='#00ff88' }
   return { genre, bpm, key, daw, color }
@@ -15,26 +15,26 @@ function getLayaForFile(fileName: string) {
 function getCollabReport(fileName: string) {
   const lower = fileName.toLowerCase()
   const needs: string[] = []
-  const checks: { icon: string, name: string, value: string, status: string }[] = []
+  const checks: { icon: string, iconImg: string, name: string, value: string, status: string }[] = []
   let score = 100
   const hasVocal = lower.includes('vocal')
-  if (!hasVocal) { needs.push('vocal'); score -= 25; checks.push({ icon: '🎤', name: 'Vocal', value: 'Yok', status: 'missing' }) }
-  else checks.push({ icon: '🎤', name: 'Vocal', value: 'Var', status: 'has' })
+  if (!hasVocal) { needs.push('vocal'); score -= 25; checks.push({ icon: '🎤', iconImg: '/icons/vocal.png', name: 'Vocal', value: 'Yok', status: 'missing' }) }
+  else checks.push({ icon: '🎤', iconImg: '/icons/vocal.png', name: 'Vocal', value: 'Var', status: 'has' })
   const hasEnergy = lower.includes('drop') || lower.includes('energetic')
-  if (!hasEnergy) { needs.push('energy'); score -= 15; checks.push({ icon: '🔥', name: 'Enerji', value: 'Düşük', status: 'low' }) }
-  else checks.push({ icon: '🔥', name: 'Enerji', value: 'İyi', status: 'has' })
+  if (!hasEnergy) { needs.push('energy'); score -= 15; checks.push({ icon: '🔥', iconImg: '/icons/energy.png', name: 'Enerji', value: 'Düşük', status: 'low' }) }
+  else checks.push({ icon: '🔥', iconImg: '/icons/energy.png', name: 'Enerji', value: 'İyi', status: 'has' })
   const hasDance = lower.includes('hihat') || lower.includes('groove')
-  if (!hasDance) { needs.push('danceability'); score -= 15; checks.push({ icon: '💃', name: 'Groove', value: 'Düşük', status: 'low' }) }
-  else checks.push({ icon: '💃', name: 'Groove', value: 'İyi', status: 'has' })
+  if (!hasDance) { needs.push('danceability'); score -= 15; checks.push({ icon: '💃', iconImg: '/icons/groove.png', name: 'Groove', value: 'Düşük', status: 'low' }) }
+  else checks.push({ icon: '💃', iconImg: '/icons/groove.png', name: 'Groove', value: 'İyi', status: 'has' })
   const hasDrop = lower.includes('drop')
-  if (!hasDrop) { needs.push('drop'); score -= 10; checks.push({ icon: '💥', name: 'Drop', value: 'Yok', status: 'missing' }) }
-  else checks.push({ icon: '💥', name: 'Drop', value: 'Var', status: 'has' })
+  if (!hasDrop) { needs.push('drop'); score -= 10; checks.push({ icon: '💥', iconImg: '/icons/drop.png', name: 'Drop', value: 'Yok', status: 'missing' }) }
+  else checks.push({ icon: '💥', iconImg: '/icons/drop.png', name: 'Drop', value: 'Var', status: 'has' })
   const hasBass = lower.includes('bass')
-  if (!hasBass) { needs.push('bass'); score -= 5; checks.push({ icon: '🎸', name: 'Bass', value: 'Zayıf', status: 'low' }) }
-  else checks.push({ icon: '🎸', name: 'Bass', value: 'Var', status: 'has' })
+  if (!hasBass) { needs.push('bass'); score -= 5; checks.push({ icon: '🎸', iconImg: '/icons/bass.png', name: 'Bass', value: 'Zayıf', status: 'low' }) }
+  else checks.push({ icon: '🎸', iconImg: '/icons/bass.png', name: 'Bass', value: 'Var', status: 'has' })
   const hasDrums = lower.includes('drum')
-  if (!hasDrums) { needs.push('drums'); score -= 10; checks.push({ icon: '🥁', name: 'Drums', value: 'Yok', status: 'missing' }) }
-  else checks.push({ icon: '🥁', name: 'Drums', value: 'Var', status: 'has' })
+  if (!hasDrums) { needs.push('drums'); score -= 10; checks.push({ icon: '🥁', iconImg: '/icons/drums.png', name: 'Drums', value: 'Yok', status: 'missing' }) }
+  else checks.push({ icon: '🥁', iconImg: '/icons/drums.png', name: 'Drums', value: 'Var', status: 'has' })
   return { score: Math.max(0, score), needs, checks, collabOpen: score < 80 }
 }
 function TimelinePlayer({ url, color, comments }: { url: string, color: string, comments: { time: number, user: string, text: string }[] }) {
@@ -126,7 +126,7 @@ export default function Studio() {
       setTracks(unique)
       if (unique.length>0) setLayaFromFile(unique[0].file_name, unique[0].file_url)
       const initLikes: Record<string, number> = {}; const initComments: Record<string, any[]> = {}
-      unique.forEach((t: Track) => { initLikes[t.id]=134; initComments[t.id]=[{ time: 12, user: 'habehabe', text: '🔥 drop' }, { time: 45, user: 'pondos', text: 'vocal?' }] })
+      unique.forEach((t: Track) => { initLikes[t.id]=134; initComments[t.id]=[{ time: 12, user: 'habehabe', text: 'drop' }, { time: 45, user: 'pondos', text: 'vocal?' }] })
       setLikes(initLikes); setComments(initComments)
     }
   }
@@ -152,7 +152,7 @@ export default function Studio() {
   const handleDelete = async (id: string) => { if (!confirm('Sil?')) return; await fetch(`/api/tracks?id=${id}`, { method: 'DELETE' }); fetchTracks() }
   const handleLogout = () => { localStorage.removeItem('soundgit_user'); router.push('/') }
   const handleCollab = (track: Track, type: string) => {
-    alert(`Havuz: ${type} ekleyeceksin - ${track.file_name.replace(/^\d+-/, '')}`)
+    alert(`Havuz: ${type} - ${track.file_name.replace(/^\d+-/, '')}`)
   }
   if (loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center text-sm">Yükleniyor...</div>
   if (!user) return null
@@ -184,14 +184,17 @@ export default function Studio() {
                     <TimelinePlayer url={track.file_url} color={tl.color} comments={trackComments} />
                     <div className="flex gap-1.5 mt-3 flex-wrap">
                       {collab.checks.map((c,i) => (
-                        <span key={i} className={`text-[10px] px-2 py-1 rounded-full border ${c.status === 'has' ? 'border-zinc-700 text-zinc-400' : 'border-orange-900/50 text-orange-300'}`}>{c.icon} {c.name}</span>
+                        <span key={i} className={`text-[10px] px-2.5 py-1.5 rounded-full border flex items-center gap-1.5 ${c.status === 'has' ? 'border-zinc-700 text-zinc-500' : 'border-orange-900/50 text-orange-300 bg-orange-950/20'}`}>
+                          <img src={c.iconImg} alt={c.name} className="w-3.5 h-3.5 invert brightness-0 invert opacity-80" style={{ filter: 'invert(1) brightness(2)' }} />
+                          {c.name}
+                        </span>
                       ))}
                     </div>
                     <div className="flex gap-1.5 mt-3 flex-wrap">
-                      <button onClick={()=>handleCollab(track, 'Vocal')} className="px-3 py-1 bg-white text-black rounded-full text-xs font-medium">Vocal</button>
-                      <button onClick={()=>handleCollab(track, 'Drums')} className="px-3 py-1 bg-zinc-800 rounded-full text-xs">Drums</button>
-                      <button onClick={()=>handleCollab(track, 'Bass')} className="px-3 py-1 bg-zinc-800 rounded-full text-xs">Bass</button>
-                      <button onClick={()=>handleCollab(track, 'Drop')} className="px-3 py-1 bg-zinc-800 rounded-full text-xs">Drop</button>
+                      <button onClick={()=>handleCollab(track, 'Vocal')} className="px-3.5 py-1.5 bg-white text-black rounded-full text-xs font-medium flex items-center gap-1.5"><img src="/icons/vocal.png" className="w-3.5 h-3.5" alt="" />Vocal</button>
+                      <button onClick={()=>handleCollab(track, 'Drums')} className="px-3.5 py-1.5 bg-zinc-800 rounded-full text-xs flex items-center gap-1.5"><img src="/icons/drums.png" className="w-3.5 h-3.5 invert" alt="" />Drums</button>
+                      <button onClick={()=>handleCollab(track, 'Bass')} className="px-3.5 py-1.5 bg-zinc-800 rounded-full text-xs flex items-center gap-1.5"><img src="/icons/bass.png" className="w-3.5 h-3.5 invert" alt="" />Bass</button>
+                      <button onClick={()=>handleCollab(track, 'Drop')} className="px-3.5 py-1.5 bg-zinc-800 rounded-full text-xs flex items-center gap-1.5"><img src="/icons/drop.png" className="w-3.5 h-3.5 invert" alt="" />Drop</button>
                     </div>
                     <div className="flex gap-2 mt-3">
                       <button onClick={() => setLikes(p => ({ ...p, [track.id]: (p[track.id]||0)+1 }))} className="px-2.5 py-1 bg-black border border-zinc-800 rounded-full text-xs">♡ {likes[track.id]||0}</button>
