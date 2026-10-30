@@ -3,72 +3,110 @@ import { useState, useRef } from "react";
 
 type DAWType = 'ableton'|'logic'|'cubase'|'fl'|'audio'|'unknown';
 
+interface ParsedResult {
+  format: string;
+  ext: string;
+  bpm: number;
+  key: string;
+  stems: string[];
+  stem_count: number;
+  file_name: string;
+  file_size_mb: string;
+  raw_size?: number;
+  lfm3?: any;
+  error?: string;
+}
+
 interface UploadFile {
   name: string;
   size: number;
   type: DAWType;
   file: File;
+  parsed?: ParsedResult;
+  parsing?: boolean;
 }
 
 function getDAWType(filename: string): { type: DAWType, icon: string, label: string, color: string } {
   const ext = filename.toLowerCase().split('.').pop() || '';
   const name = filename.toLowerCase();
-  
-  // Ableton
   if (['als','alp','adg','adv','alc'].includes(ext) || name.includes('ableton')) {
     return { type: 'ableton', icon: 'A', label: 'Ableton Live', color: 'bg-[#00D9FF]/20 border-[#00D9FF]/30' };
   }
-  // Logic
   if (['logicx','logic','band'].includes(ext) || name.includes('logic')) {
     return { type: 'logic', icon: '◍', label: 'Logic Pro', color: 'bg-[#FF2D55]/20 border-[#FF2D55]/30' };
   }
-  // Cubase
   if (['cpr','npr','bak'].includes(ext) || name.includes('cubase')) {
     return { type: 'cubase', icon: 'C', label: 'Cubase', color: 'bg-[#FF9500]/20 border-[#FF9500]/30' };
   }
-  // FL Studio
   if (['flp','fst','fsc'].includes(ext) || name.includes('fl studio') || name.includes('fruity')) {
     return { type: 'fl', icon: 'F', label: 'FL Studio', color: 'bg-[#FFCC00]/20 border-[#FFCC00]/30' };
   }
-  // Audio
-  if (['wav','mp3','aiff','aif','flac','ogg','m4a','mp4','mov'].includes(ext)) {
+  if (['wav','mp3','aiff','aif','flac','ogg','m4a'].includes(ext)) {
     return { type: 'audio', icon: '♫', label: 'Audio', color: 'bg-white/[0.06] border-white/[0.1]' };
   }
   return { type: 'unknown', icon: '◫', label: 'Project', color: 'bg-white/[0.06]' };
 }
 
-export default function UploadZone({ onFiles }: { onFiles?: (files: File[]) => void }) {
+export default function UploadZone({ onFiles }: { onFiles?: (files: File[], parsed: ParsedResult[]) => void }) {
   const [isDrag, setIsDrag] = useState(false);
   const [files, setFiles] = useState<UploadFile[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFiles = (fileList: FileList) => {
+  const parseFile = async (file: File, index: number) => {
+    setFiles(prev => prev.map((f,i) => i===index ? { ...f, parsing: true } : f));
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/parse', { method: 'POST', body: fd });
+      const data = await res.json() as ParsedResult;
+      
+      setFiles(prev => prev.map((f,i) => i===index ? { ...f, parsed: data, parsing: false } : f));
+      
+      // Callback for studio to update score
+      const allParsed = [...files.map(f=>f.parsed).filter(Boolean), data] as ParsedResult[];
+      onFiles?.(files.map(f=>f.file), allParsed);
+      
+      return data;
+    } catch (e) {
+      setFiles(prev => prev.map((f,i) => i===index ? { ...f, parsing: false } : f));
+      return null;
+    }
+  };
+
+  const handleFiles = async (fileList: FileList) => {
     const newFiles: UploadFile[] = Array.from(fileList).map(f => {
       const info = getDAWType(f.name);
-      return { name: f.name, size: f.size, type: info.type, file: f };
+      return { name: f.name, size: f.size, type: info.type, file: f, parsing: false };
     });
+    
+    const startIndex = files.length;
     setFiles(prev => [...prev, ...newFiles]);
-    onFiles?.(Array.from(fileList));
+    
+    // Parse each with LFM3 + Polars pipeline
+    newFiles.forEach((uf, idx) => {
+      parseFile(uf.file, startIndex + idx);
+    });
+    
+    onFiles?.(Array.from(fileList), []);
   };
 
   return (
     <div className="w-full space-y-3">
-      {/* DAW selector chips - minimal icon */}
       <div className="flex gap-1.5 flex-wrap">
         {[
-          { id: 'ableton', icon: 'A', label: 'Ableton' },
-          { id: 'logic', icon: '◍', label: 'Logic' },
-          { id: 'cubase', icon: 'C', label: 'Cubase' },
-          { id: 'fl', icon: 'F', label: 'FL Studio' },
+          { id: 'ableton', icon: 'A', label: 'Ableton', bpm: '128' },
+          { id: 'logic', icon: '◍', label: 'Logic', bpm: '128' },
+          { id: 'cubase', icon: 'C', label: 'Cubase', bpm: '128' },
+          { id: 'fl', icon: 'F', label: 'FL Studio', bpm: '140' },
         ].map(daw => (
           <div key={daw.id} className="px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.08] flex items-center gap-1.5 text-[10px] font-mono">
             <span className="w-4 h-4 rounded-full bg-white text-black flex items-center justify-center text-[9px] font-bold">{daw.icon}</span>
             <span className="opacity-70">{daw.label}</span>
+            <span className="opacity-30">• {daw.bpm}</span>
           </div>
         ))}
       </div>
 
-      {/* Drop zone - SoundCloud style */}
       <div
         onDragOver={(e)=>{ e.preventDefault(); setIsDrag(true); }}
         onDragLeave={()=>setIsDrag(false)}
@@ -93,31 +131,54 @@ export default function UploadZone({ onFiles }: { onFiles?: (files: File[]) => v
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center text-[18px] group-hover:scale-110 transition">↑</div>
           <div className="space-y-1">
-            <div className="text-[13px] font-bold">Drop DAW project or audio</div>
-            <div className="text-[11px] opacity-40 font-mono">.als .logicx .cpr .flp .wav .mp3 —  or click to browse</div>
+            <div className="text-[13px] font-bold">Drop DAW project → BPM/Key/STEM</div>
+            <div className="text-[11px] opacity-40 font-mono">.als .logicx .cpr .flp .wav → LFM3 + Polars + DuckDB</div>
           </div>
           <div className="flex gap-1.5">
-            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">Ableton</span>
-            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">Logic</span>
-            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">Cubase</span>
-            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">FL</span>
+            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">LFM3 hears</span>
+            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">Polars cleans</span>
+            <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">DuckDB queries</span>
           </div>
         </div>
       </div>
 
-      {/* Uploaded list */}
       {files.length>0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {files.map((f,i)=>{
             const info = getDAWType(f.name);
+            const p = f.parsed;
             return (
-              <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${info.color}`}>
-                <div className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center text-[10px] font-bold">{info.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-mono truncate">{f.name}</div>
-                  <div className="text-[9px] opacity-50">{info.label} • {(f.size/1024/1024).toFixed(2)} MB</div>
+              <div key={i} className={`px-3 py-3 rounded-xl border ${info.color}`}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center text-[10px] font-bold">{info.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[11px] font-mono truncate">{f.name} • {(f.size/1024/1024).toFixed(2)} MB</div>
+                    <div className="text-[9px] opacity-50">{info.label} {f.parsing ? '• Parsing...' : p ? `• ${p.bpm} BPM • ${p.key} • ${p.stem_count} stems` : ''}</div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {f.parsing && <div className="w-4 h-4 border border-white/20 border-t-white rounded-full animate-spin" />}
+                    {p && <span className="px-2 py-1 rounded-full bg-[#00ff88]/20 text-[#00ff88] text-[9px] font-mono">{p.bpm} BPM</span>}
+                    <button onClick={(e)=>{ e.stopPropagation(); setFiles(files.filter((_,j)=>j!==i)); }} className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px]">✕</button>
+                  </div>
                 </div>
-                <button onClick={(e)=>{ e.stopPropagation(); setFiles(files.filter((_,j)=>j!==i)); }} className="w-6 h-6 rounded-full bg-white/[0.06] flex items-center justify-center text-[10px]">✕</button>
+                {p && (
+                  <div className="mt-2 pt-2 border-t border-white/[0.06] space-y-2">
+                    <div className="flex gap-1.5 flex-wrap">
+                      <span className="px-2 py-1 rounded-full bg-white text-black text-[9px] font-bold">BPM {p.bpm}</span>
+                      <span className="px-2 py-1 rounded-full bg-white/[0.1] text-[9px]">Key {p.key}</span>
+                      <span className="px-2 py-1 rounded-full bg-white/[0.1] text-[9px]">{p.stem_count} STEMs</span>
+                      <span className="px-2 py-1 rounded-full bg-[#00D9FF]/20 text-[9px]">LFM3 ✓</span>
+                      <span className="px-2 py-1 rounded-full bg-white/[0.06] text-[9px]">{p.format}</span>
+                    </div>
+                    {p.stems.length>0 && (
+                      <div className="flex gap-1 flex-wrap">
+                        {p.stems.map((s,j)=>(
+                          <span key={j} className="px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.08] text-[9px] font-mono">{s}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

@@ -1,144 +1,46 @@
 {
-  "total_tracks": 101,
-  "casio": {
-    "title": "Casio-MT-45-16-Beat",
-    "artist": "habehabe",
-    "bpm": 128,
-    "key": "F#m",
-    "genre": "techno",
-    "source": "upload",
-    "url": "Casio-MT-45-16-Beat.wav",
-    "likes": 110,
-    "key_normalized": "F# minor"
-  },
-  "top10": [
-    {
-      "title": "Casio-MT-45-16-Beat",
-      "artist": "habehabe",
-      "bpm": 128,
-      "key": "F#m",
-      "genre": "techno",
-      "source": "upload",
-      "url": "Casio-MT-45-16-Beat.wav",
-      "likes": 110,
-      "key_normalized": "F# minor"
-    },
-    {
-      "title": "Bounce v99",
-      "artist": "Producer",
-      "bpm": 132,
-      "key": "Em",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 109,
-      "key_normalized": "E minor"
-    },
-    {
-      "title": "Bounce v98",
-      "artist": "Producer",
-      "bpm": 131,
-      "key": "Gm",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 108,
-      "key_normalized": "G minor"
-    },
-    {
-      "title": "Bounce v97",
-      "artist": "Producer",
-      "bpm": 130,
-      "key": "Am",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 107,
-      "key_normalized": "A minor"
-    },
-    {
-      "title": "Bounce v96",
-      "artist": "Producer",
-      "bpm": 129,
-      "key": "F#m",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 106,
-      "key_normalized": "F# minor"
-    },
-    {
-      "title": "Bounce v95",
-      "artist": "Producer",
-      "bpm": 128,
-      "key": "Em",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 105,
-      "key_normalized": "E minor"
-    },
-    {
-      "title": "Bounce v94",
-      "artist": "Producer",
-      "bpm": 132,
-      "key": "Gm",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 104,
-      "key_normalized": "G minor"
-    },
-    {
-      "title": "Bounce v93",
-      "artist": "Producer",
-      "bpm": 131,
-      "key": "Am",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 103,
-      "key_normalized": "A minor"
-    },
-    {
-      "title": "Bounce v92",
-      "artist": "Producer",
-      "bpm": 130,
-      "key": "F#m",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 102,
-      "key_normalized": "F# minor"
-    },
-    {
-      "title": "Bounce v91",
-      "artist": "Producer",
-      "bpm": 129,
-      "key": "Em",
-      "genre": "techno",
-      "source": "soundgit",
-      "url": "",
-      "likes": 101,
-      "key_normalized": "E minor"
-    }
-  ],
-  "similar_count": 16,
-  "similar_avg_likes": 62.5,
-  "top_percentile": 100.0,
-  "genre_stats": [
-    {
-      "genre": "techno",
-      "most_common_bpm": 128,
-      "avg_likes": 60.0,
-      "count": 101
-    }
-  ],
-  "lfs": {
+  "top_track": {
+    "format": "Audio",
+    "ext": ".wav",
     "bpm": 128,
     "key": "F# minor",
-    "lufs": -8.2,
-    "drop_punch": 72,
-    "recommendation": "Drop'ta punch eksik, transient shaper dene - Attack +35%, Sustain -20%, Tape sat"
+    "stems": [
+      "Stereo Mix"
+    ],
+    "stem_count": 1,
+    "duration": 16,
+    "file": "Casio-MT-45-16-Beat.wav",
+    "size_mb": 1.3458671569824219
+  },
+  "all_tracks": [
+    {
+      "format": "Audio",
+      "ext": ".wav",
+      "bpm": 128,
+      "key": "F# minor",
+      "stems": [
+        "Stereo Mix"
+      ],
+      "stem_count": 1,
+      "duration": 16,
+      "file": "Casio-MT-45-16-Beat.wav",
+      "size_mb": 1.3458671569824219
+    }
+  ],
+  "avg_bpm": 128.0,
+  "common_key": "F# minor",
+  "total_stems": 1,
+  "lfsm3_analysis": {
+    "model": "LiquidAI/LFM3-Omni-2B",
+    "can_hear": true,
+    "can_see_waveform": true,
+    "can_speak": true,
+    "parsed_formats": [
+      "als",
+      "flp",
+      "logicx",
+      "cpr",
+      "wav"
+    ]
   }
 }

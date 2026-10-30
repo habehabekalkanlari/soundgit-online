@@ -117,8 +117,16 @@ export default function Studio() {
     setCurrentTime(time);
   };
 
-  const handleUpload = (files: File[]) => {
+  const [parsedResults, setParsedResults] = useState<any[]>([]);
+  const handleUpload = (files: File[], parsed: any[] = []) => {
     setUploadedFiles(prev => [...prev, ...files]);
+    if (parsed.length > 0) {
+      setParsedResults(prev => [...prev, ...parsed]);
+      // Update transport BPM/Key from first parsed
+      if (parsed[0]?.bpm) {
+        console.log('Parsed BPM:', parsed[0].bpm, 'Key:', parsed[0].key, 'Stems:', parsed[0].stems);
+      }
+    }
     // If audio file, create object URL and play
     const audioFile = files.find(f => /\.(wav|mp3|aiff|flac|ogg|m4a)$/i.test(f.name));
     if (audioFile) {
