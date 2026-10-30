@@ -1,3 +1,5 @@
+"use client";
+import LFM3OmniAssistant from "../components/LFM3OmniAssistant";
 "use client"
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -94,7 +96,6 @@ function TimelinePlayer({ url, color, comments }: { url: string, color: string, 
       </div>
       <audio ref={audioRef} src={url} preload="metadata" crossOrigin="anonymous" />
     </div>
-      <LFM3OmniAssistant />
   )
 }
 export default function Studio() {
@@ -271,6 +272,7 @@ export default function Studio() {
           <p className="text-[11px] text-zinc-500 mt-2">Havuz mantığı: Projeyi yükle, dinle, geliştir, tekrar paylaş, parça oluşsun! {uploading ? 'Yükleniyor...' : 'DAW + Audio - Tone in tone - Havuz'}</p>
         </div>
       </div>
+      <LFM3OmniAssistant />
     </div>
-        )
+  )
 }
