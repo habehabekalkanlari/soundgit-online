@@ -58,21 +58,7 @@ function TimelinePlayer({ url, color, comments }: { url: string, color: string, 
     const onEnd = () => setIsPlaying(false)
     audio.addEventListener('timeupdate', onTime); audio.addEventListener('loadedmetadata', onMeta); audio.addEventListener('ended', onEnd)
     return (
-    <>
-      {/* LANG TOGGLE BAR - Top */}
-      <div className="sticky top-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur border-b border-white/10">
-        <a href="/" className="flex items-center gap-2 text-xs font-black tracking-widest opacity-80 hover:opacity-100">
-          <div className="w-4 h-4 rotate-45 bg-gradient-to-br from-[#00ff88] to-[#0088ff]" /> SOUNDGIT
-        </a>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] opacity-50 hidden md:block">{isTR ? "Dil:" : "Lang:"}</span>
-          <button onClick={toggleLang} className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[11px] font-bold tracking-widest hover:bg-white/20">
-            {lang==="tr" ? "EN" : "TR"} · {isTR ? "TR" : "EN"}
-          </button>
-          <a href="/" className="px-3 py-1 rounded-full bg-white text-black text-[11px] font-bold">{isTR ? "Ana Sayfa" : "Home"}</a>
-        </div>
-      </div>
-) => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('loadedmetadata', onMeta); audio.removeEventListener('ended', onEnd) }
+      <><LangBar />) => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('loadedmetadata', onMeta); audio.removeEventListener('ended', onEnd) }
   }, [])
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return
@@ -112,12 +98,6 @@ function TimelinePlayer({ url, color, comments }: { url: string, color: string, 
   )
 }
 export default function Studio() {
-
-  const [lang, setLang] = useState<"tr"|"en">("en");
-  useEffect(()=>{ const s=localStorage.getItem("soundgit_lang") as any; if(s) setLang(s); },[]);
-  const toggleLang = () => { const n = lang==="tr"?"en":"tr"; setLang(n as any); localStorage.setItem("soundgit_lang", n); };
-  const isTR = lang==="tr";
-
   const [tracks, setTracks] = useState<Track[]>([])
   const [uploading, setUploading] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -294,5 +274,5 @@ export default function Studio() {
     </div>
   )
 
-    </>
+      </>
 )
