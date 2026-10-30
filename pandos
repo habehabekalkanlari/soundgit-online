@@ -1,0 +1,20 @@
+#!/bin/bash
+API_URL="https://soundgit.online/api/terminal"
+FALLBACK_URL="https://soundgit-online.2ndunit.workers.dev/api/terminal"
+echo ""
+echo "🐼 PANDOS TERMINAL - SoundGit"
+echo "--------------------------------"
+echo "Çıkmak için: exit"
+echo ""
+while true; do
+  echo -n "SEN > "
+  read -r input
+  [[ "$input" == "exit" || "$input" == "q" ]] && echo "Görüşürüz abicim." && break
+  [[ -z "$input" ]] && continue
+  json=$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')
+  resp=$(curl -s -X POST "$API_URL" -H "Content-Type: application/json" -d "{\"message\": $json, \"from\": \"terminal\"}")
+  reply=$(echo "$resp" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('reply') or d.get('message') or d.get('output') or str(d))" 2>/dev/null || echo "$resp")
+  echo ""
+  echo "PANDOS > $reply"
+  echo ""
+done
