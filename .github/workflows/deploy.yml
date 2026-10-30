@@ -10,12 +10,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: 'npm'
       - run: npm ci
       - run: npx @opennextjs/cloudflare@latest build
-      - name: Deploy (OpenNext - localde çalışan komutun aynısı)
-        run: npx @opennextjs/cloudflare@latest deploy
+      - name: Deploy with Wrangler v3 (eski sağlam API)
+        run: npx wrangler@3.114.1 deploy .open-next/worker.js --config wrangler.toml --compatibility-date 2024-12-01
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
