@@ -94,6 +94,7 @@ function TimelinePlayer({ url, color, comments }: { url: string, color: string, 
       </div>
       <audio ref={audioRef} src={url} preload="metadata" crossOrigin="anonymous" />
     </div>
+      <LFM3OmniAssistant />
   )
 }
 export default function Studio() {
@@ -271,5 +272,5 @@ export default function Studio() {
         </div>
       </div>
     </div>
-  )
+        )
 }
