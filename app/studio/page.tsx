@@ -18,8 +18,8 @@ function getCollabReport(fileName: string) {
   const checks: { icon: string, name: string, value: string, status: string }[] = []
   let score = 100
   const hasVocal = lower.includes('vocal')
-  if (!hasVocal) { needs.push('vocal'); score -= 25; checks.push({ icon: '🎤', name: 'Vocal', value: 'Yok %0', status: 'missing' }) }
-  else checks.push({ icon: '🎤', name: 'Vocal', value: 'Var %80', status: 'has' })
+  if (!hasVocal) { needs.push('vocal'); score -= 25; checks.push({ icon: '<img src="/icons/vocal.png" className="w-4 h-4 invert" />', name: 'Vocal', value: 'Yok %0', status: 'missing' }) }
+  else checks.push({ icon: '<img src="/icons/vocal.png" className="w-4 h-4 invert" />', name: 'Vocal', value: 'Var %80', status: 'has' })
   const hasEnergy = lower.includes('drop') || lower.includes('energetic')
   if (!hasEnergy) { needs.push('energy'); score -= 15; checks.push({ icon: '🔥', name: 'Enerji', value: '50% Düşük', status: 'low' }) }
   else checks.push({ icon: '🔥', name: 'Enerji', value: '80% İyi', status: 'has' })
@@ -30,13 +30,13 @@ function getCollabReport(fileName: string) {
   if (!hasDrop) { needs.push('drop'); score -= 10; checks.push({ icon: '💥', name: 'Drop', value: 'Yok', status: 'missing' }) }
   else checks.push({ icon: '💥', name: 'Drop', value: 'Var', status: 'has' })
   const hasBass = lower.includes('bass')
-  if (!hasBass) { needs.push('bass'); score -= 5; checks.push({ icon: '🎸', name: 'Bass', value: 'Zayıf', status: 'low' }) }
-  else checks.push({ icon: '🎸', name: 'Bass', value: 'Var', status: 'has' })
+  if (!hasBass) { needs.push('bass'); score -= 5; checks.push({ icon: '<img src="/icons/bass.png" className="w-4 h-4 invert" />', name: 'Bass', value: 'Zayıf', status: 'low' }) }
+  else checks.push({ icon: '<img src="/icons/bass.png" className="w-4 h-4 invert" />', name: 'Bass', value: 'Var', status: 'has' })
   const hasDrums = lower.includes('drum')
-  if (!hasDrums) { needs.push('drums'); score -= 10; checks.push({ icon: '🥁', name: 'Drums', value: 'Yok', status: 'missing' }) }
-  else checks.push({ icon: '🥁', name: 'Drums', value: 'Var', status: 'has' })
+  if (!hasDrums) { needs.push('drums'); score -= 10; checks.push({ icon: '<img src="/icons/drums.png" className="w-4 h-4 invert" />', name: 'Drums', value: 'Yok', status: 'missing' }) }
+  else checks.push({ icon: '<img src="/icons/drums.png" className="w-4 h-4 invert" />', name: 'Drums', value: 'Var', status: 'has' })
   const issues = []
-  if (!hasVocal) issues.push({ icon: '🎤', msg: 'Vocal: Yok! %0, lazım!' })
+  if (!hasVocal) issues.push({ icon: '<img src="/icons/vocal.png" className="w-4 h-4 invert" />', msg: 'Vocal: Yok! %0, lazım!' })
   if (!hasEnergy) issues.push({ icon: '🔥', msg: 'Enerji: Düşük, 50%, drop lazım!' })
   if (!hasDance) issues.push({ icon: '💃', msg: 'Danceability: Düşük, hi-hat lazım!' })
   if (!hasVocal) issues.push({ icon: '💡', msg: 'Öneri: Vocal eklenirse 90/100 olur!' })
@@ -206,7 +206,7 @@ export default function Studio() {
                       </div>
                       <div className="space-y-1">
                         {collab.issues.map((iss,i) => (
-                          <p key={i} className={`text-[11px] px-2 py-1 rounded-lg ${iss.icon === '💡' ? 'bg-blue-950/30 border border-blue-900/50 text-blue-300' : iss.icon === '🎤' && iss.msg.includes('Yok') ? 'bg-red-950/20 text-red-300' : 'bg-zinc-900 text-zinc-300'}`}>{iss.icon} {iss.msg}</p>
+                          <p key={i} className={`text-[11px] px-2 py-1 rounded-lg ${iss.icon === '💡' ? 'bg-blue-950/30 border border-blue-900/50 text-blue-300' : iss.icon === '<img src="/icons/vocal.png" className="w-4 h-4 invert" />' && iss.msg.includes('Yok') ? 'bg-red-950/20 text-red-300' : 'bg-zinc-900 text-zinc-300'}`}>{iss.icon} {iss.msg}</p>
                         ))}
                       </div>
                       <p className="text-[10px] text-zinc-500 mt-2">💡 Öneri: Vocal eklenirse 90/100 olur! | Skor: {collab.score}/100 - {collab.collabOpen ? 'Collab lazım!' : 'İyi!'}</p>
@@ -215,9 +215,9 @@ export default function Studio() {
                     <div className="mt-3">
                       <p className="text-[11px] font-bold mb-2">🌊 Havuz Mantığı - Biri yazıyor, diğeri üstüne ekliyor!</p>
                       <div className="flex gap-2 flex-wrap">
-                        <button onClick={()=>handleCollab(track, 'Vocal')} className="px-3 py-1.5 bg-white text-black rounded-full text-xs font-bold hover:bg-zinc-200">🎤 Vocal Ekleyeceğim</button>
-                        <button onClick={()=>handleCollab(track, 'Drums')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900">🥁 Drums Ekleyeceğim</button>
-                        <button onClick={()=>handleCollab(track, 'Bass')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900">🎸 Bass Ekleyeceğim</button>
+                        <button onClick={()=>handleCollab(track, 'Vocal')} className="px-3 py-1.5 bg-white text-black rounded-full text-xs font-bold hover:bg-zinc-200"><img src="/icons/vocal.png" className="w-4 h-4 invert" /> Vocal Ekleyeceğim</button>
+                        <button onClick={()=>handleCollab(track, 'Drums')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900"><img src="/icons/drums.png" className="w-4 h-4 invert" /> Drums Ekleyeceğim</button>
+                        <button onClick={()=>handleCollab(track, 'Bass')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900"><img src="/icons/bass.png" className="w-4 h-4 invert" /> Bass Ekleyeceğim</button>
                         <button onClick={()=>handleCollab(track, 'Drop')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900">💥 Drop Ekleyeceğim</button>
                         <button onClick={()=>handleCollab(track, 'Hi-hat')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900">💃 Hi-hat Ekleyeceğim</button>
                         <button onClick={()=>handleCollab(track, 'Enerji')} className="px-3 py-1.5 bg-black border border-zinc-700 rounded-full text-xs hover:bg-zinc-900">🔥 Enerji Ekleyeceğim</button>

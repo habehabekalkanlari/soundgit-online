@@ -23,10 +23,10 @@ async function callActions(action: string, args: Record<string, unknown>) {
 }
 
 const LAYERS = [
-  { color: "#00ff88", speed: 0.00035, amp: 46, thickness: 2.2, alpha: 0.9 },
-  { color: "#0088ff", speed: 0.00028, amp: 62, thickness: 2.0, alpha: 0.8 },
-  { color: "#ff0088", speed: 0.00042, amp: 34, thickness: 1.8, alpha: 0.75 },
-  { color: "#00e5ff", speed: 0.00022, amp: 78, thickness: 1.6, alpha: 0.7 },
+  { color: "#00ff88", speed: 0.00002, amp: 46, thickness: 2.2, alpha: 0.9 },
+  { color: "#0088ff", speed: 0.00002, amp: 62, thickness: 2.0, alpha: 0.8 },
+  { color: "#ff0088", speed: 0.00002, amp: 34, thickness: 1.8, alpha: 0.75 },
+  { color: "#00e5ff", speed: 0.00002, amp: 78, thickness: 1.6, alpha: 0.7 },
 ];
 
 function SineCanvas() {
