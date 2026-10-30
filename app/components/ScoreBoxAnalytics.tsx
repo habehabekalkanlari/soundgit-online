@@ -1,61 +1,41 @@
 "use client";
-import { useEffect, useState } from 'react';
-
-export default function ScoreBoxAnalytics({ lang = 'en' }: { lang?: 'tr' | 'en' }) {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch('/api/analytics')
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) return <div className="text-[11px] opacity-60">Loading analytics...</div>;
-  if (!data) return null;
-
-  const casio = data.casio || {};
-  const perc = Math.round(data.top_percentile || 80);
-  const similar = data.similar_count || 12;
-
+interface Props {
+  collab?: any;
+  lang?: "tr" | "en";
+}
+export default function ScoreBoxAnalytics({ collab = { vocal: 53, energy: 64, groove: 86, drop: 83, bass: 63, drums: 68, overall: 70 }, lang = 'en' }: Props) {
+  const scores = collab;
   return (
-    <div className="border border-white/10 rounded-xl p-3 bg-white/[0.02] space-y-2">
-      <div className="flex justify-between items-center">
-        <span className="text-[11px] uppercase tracking-widest opacity-50">{lang === 'tr' ? 'Skor' : 'Score'}</span>
-        <span className="text-[11px] px-2 py-0.5 rounded-full bg-white text-black font-mono">{casio.likes || 110} likes • Top %{perc}</span>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] opacity-50 tracking-widest">SCORE</span>
+        <span className="px-2.5 py-1 rounded-full bg-white text-black text-[10px] font-bold">110 likes • Top %80</span>
       </div>
-      
-      <div className="grid grid-cols-3 gap-2 text-[11px] font-mono">
-        <div className="bg-white/[0.04] rounded p-2">
-          <div className="opacity-40">BPM</div>
-          <div className="text-[13px] font-bold">{casio.bpm || 128}</div>
-          <div className="opacity-30 text-[9px]">sweet spot</div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="p-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+          <div className="text-[8px] opacity-40">BPM</div><div className="text-[12px] font-bold">128</div><div className="text-[8px] opacity-30">sweet spot</div>
         </div>
-        <div className="bg-white/[0.04] rounded p-2">
-          <div className="opacity-40">Key</div>
-          <div className="text-[13px] font-bold">{casio.key_normalized || 'F# minor'}</div>
-          <div className="opacity-30 text-[9px]">{similar} similar</div>
+        <div className="p-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+          <div className="text-[8px] opacity-40">Key</div><div className="text-[11px] font-bold">F# minor</div><div className="text-[8px] opacity-30">12 similar</div>
         </div>
-        <div className="bg-white/[0.04] rounded p-2">
-          <div className="opacity-40">LUFS</div>
-          <div className="text-[13px] font-bold">{data.lfs?.lufs || -8.2}</div>
-          <div className="opacity-30 text-[9px]">loud</div>
+        <div className="p-2.5 rounded-lg bg-white/[0.06] border border-white/[0.06]">
+          <div className="text-[8px] opacity-40">LUFS</div><div className="text-[12px] font-bold">-8.2</div><div className="text-[8px] opacity-30">loud</div>
         </div>
       </div>
-
-      <div className="bg-yellow-500/10 border border-yellow-500/20 rounded p-2 text-[11px]">
-        <div className="font-bold text-yellow-200/80">LFM3-Omni-2B:</div>
-        <div className="opacity-80 mt-0.5">{data.lfs?.recommendation || "Drop'ta punch eksik, transient shaper dene"}</div>
-        <div className="mt-1.5 flex gap-1">
-          <span className="px-1.5 py-0.5 bg-white/10 rounded text-[9px]">Drop 72/100</span>
-          <span className="px-1.5 py-0.5 bg-white/10 rounded text-[9px]">+Attack 35%</span>
-          <span className="px-1.5 py-0.5 bg-white/10 rounded text-[9px]">Tape Sat</span>
+      <div className="p-3 rounded-lg bg-[#ffcc00]/10 border border-[#ffcc00]/20">
+        <div className="text-[10px] font-bold text-[#ffcc00] mb-1">LFM3-Omni-2B:</div>
+        <div className="text-[10px] opacity-80">Drop'ta punch eksik, transient shaper dene</div>
+        <div className="flex gap-1.5 mt-2">
+          <span className="px-2 py-0.5 rounded-full bg-white/[0.1] text-[8px]">Drop 72/100</span>
+          <span className="px-2 py-0.5 rounded-full bg-white/[0.1] text-[8px]">+Attack 35%</span>
+          <span className="px-2 py-0.5 rounded-full bg-white/[0.1] text-[8px]">Tape Sat</span>
         </div>
       </div>
-
-      <div className="text-[9px] opacity-30 font-mono">
-        DuckDB: {similar} track → Top %{perc} • Polars: F# minor avg {Math.round(data.similar_avg_likes||58)} likes → sen {casio.likes}
+      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/[0.06]">
+        <div className="text-[9px]"><div className="flex justify-between opacity-60"><span>Vocal</span><span>{scores.vocal}</span></div><div className="h-[2px] bg-white/[0.1] rounded-full mt-1"><div className="h-full bg-white rounded-full" style={{ width: `${scores.vocal}%` }} /></div></div>
+        <div className="text-[9px]"><div className="flex justify-between opacity-60"><span>Energy</span><span>{scores.energy}</span></div><div className="h-[2px] bg-white/[0.1] rounded-full mt-1"><div className="h-full bg-white rounded-full" style={{ width: `${scores.energy}%` }} /></div></div>
+        <div className="text-[9px]"><div className="flex justify-between opacity-60"><span>Groove</span><span>{scores.groove}</span></div><div className="h-[2px] bg-white/[0.1] rounded-full mt-1"><div className="h-full bg-white rounded-full" style={{ width: `${scores.groove}%` }} /></div></div>
+        <div className="text-[9px]"><div className="flex justify-between opacity-60"><span>Drop</span><span>{scores.drop}</span></div><div className="h-[2px] bg-white/[0.1] rounded-full mt-1"><div className="h-full bg-white rounded-full" style={{ width: `${scores.drop}%` }} /></div></div>
       </div>
     </div>
   );
