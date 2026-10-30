@@ -19,7 +19,17 @@ export default function Studio() {
   const [mounted, setMounted] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+    const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [parsedResults, setParsedResults] = useState<any[]>([]);
+  const [collabScores, setCollabScores] = useState<any>({ vocal: 82, energy: 76, groove: 88, drop: 72, bass: 79, drums: 85, overall: 80 });
+  const handleUpload = (files: File[], parsed: any[] = []) => {
+    setUploadedFiles(prev => [...prev, ...files]);
+    if (parsed.length > 0) {
+      setParsedResults(prev => [...prev, ...parsed]);
+      const latest = parsed[parsed.length-1];
+      if (latest?.collab) setCollabScores(latest.collab);
+    }
+  };
   const [parsedResults, setParsedResults] = useState<any[]>([]);
   const [collabScores, setCollabScores] = useState<any>({ vocal: 82, energy: 76, groove: 88, drop: 72, bass: 79, drums: 85, overall: 80 });
 
@@ -122,16 +132,6 @@ export default function Studio() {
   const [parsedResults, setParsedResults] = useState<any[]>([]);
   const handleUpload = (files: File[], parsed: any[] = []) => {
     setUploadedFiles(prev => [...prev, ...files]);
-    if (parsed.length > 0) {
-      setParsedResults(prev => [...prev, ...parsed]);
-      const latest = parsed[parsed.length-1];
-      if (latest?.collab) setCollabScores(latest.collab);
-      // Update transport BPM/Key from first parsed
-      if (parsed[0]?.bpm) {
-        console.log('Parsed BPM:', parsed[0].bpm, 'Key:', parsed[0].key, 'Stems:', parsed[0].stems, 'Collab:', parsed[0].collab);
-        if (parsed[0].collab) {
-          setCollabScores(parsed[0].collab);
-        }
       }
     }
     // If audio file, create object URL and play
