@@ -1,6 +1,5 @@
 "use client";
 import LFM3OmniAssistant from "../components/LFM3OmniAssistant";
-"use client"
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useKnolli } from "@/lib/knolli"
