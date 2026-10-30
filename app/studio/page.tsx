@@ -58,7 +58,7 @@ export default function StudioPage() {
             <div className="flex items-center gap-2">
               <button onClick={()=>setIsPlaying(!isPlaying)} className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center text-[14px]">{isPlaying?'■':'▶'}</button>
               <div className="flex-1">
-                <SoundCloudWaveform isPlaying={isPlaying} currentTime={currentTime} duration={duration} onSeek={setCurrentTime} />
+                <SoundCloudWaveform audioUrl="/audio/Casio-MT-45-16-Beat.wav" isPlaying={isPlaying} currentTime={currentTime} duration={duration} onSeek={setCurrentTime} />
               </div>
               <span className="text-[11px] opacity-60">{currentTime.toFixed(1)}s / {duration}s</span>
             </div>
