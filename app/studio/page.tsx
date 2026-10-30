@@ -27,7 +27,7 @@ export default function StudioPage() {
       const url = URL.createObjectURL(audioFile);
       setAudioUrl(url);
       setCurrentTime(0);
-      setIsPlaying(false); // NO AUTOPLAY
+      setIsPlaying(false); 
       const a = new Audio(url);
       a.onloadedmetadata = () => { if (a.duration && isFinite(a.duration)) setDuration(a.duration); };
     }
@@ -37,7 +37,7 @@ export default function StudioPage() {
     if (isPlaying) {
       interval = setInterval(() => {
         setCurrentTime(prev => {
-          if (prev >= duration) { setIsPlaying(false); return duration; // stop at end, no reloop }
+          if (prev >= duration) { setIsPlaying(false); return duration; }
           return prev + 0.1;
         });
       }, 100);
