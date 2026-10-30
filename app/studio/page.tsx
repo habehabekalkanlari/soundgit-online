@@ -12,11 +12,23 @@ export default function StudioPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(16);
+  const [audioUrl, setAudioUrl] = useState("/audio/Casio-MT-45-16-Beat.wav");
   const [activeTab, setActiveTab] = useState<'upload'|'pool'|'mix'>('upload');
   const [filter, setFilter] = useState<'havuz'|'tum'>('havuz');
   const t = (tr: string, en: string) => lang==='tr'?tr:en;
   const handleUpload = (files: File[], parsed: any[] = []) => {
     setUploadedFiles(prev => [...prev, ...files]);
+    const audioFile = files.find(f => /\.(wav|mp3|aiff|flac|ogg|m4a)$/i.test(f.name));
+    if (audioFile) {
+      const url = URL.createObjectURL(audioFile);
+      setAudioUrl(url);
+      setCurrentTime(0);
+      setIsPlaying(true);
+      const a = new Audio(url);
+      a.onloadedmetadata = () => {
+        if (a.duration && isFinite(a.duration)) setDuration(a.duration);
+      };
+    }
     if (parsed.length > 0) {
       setParsedResults(prev => [...prev, ...parsed]);
       const latest = parsed[parsed.length - 1];
@@ -58,7 +70,7 @@ export default function StudioPage() {
             <div className="flex items-center gap-2">
               <button onClick={()=>setIsPlaying(!isPlaying)} className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center text-[14px]">{isPlaying?'■':'▶'}</button>
               <div className="flex-1">
-                <SoundCloudWaveform audioUrl="/audio/Casio-MT-45-16-Beat.wav" isPlaying={isPlaying} currentTime={currentTime} duration={duration} onSeek={setCurrentTime} />
+                <SoundCloudWaveform audioUrl={audioUrl} isPlaying={isPlaying} currentTime={currentTime} duration={duration} onSeek={setCurrentTime} />
               </div>
               <span className="text-[11px] opacity-60">{currentTime.toFixed(1)}s / {duration}s</span>
             </div>
