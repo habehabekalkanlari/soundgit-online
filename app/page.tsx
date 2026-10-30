@@ -716,7 +716,7 @@ export default function App() {
             onClick={openGithub}
             className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-white/85"
           >
-            <GithubIcon size={16} />
+            <spanIcon size={16} />
             GitHub
           </button>
         </div>
@@ -834,7 +834,7 @@ export default function App() {
               onClick={openSponsors}
               className="flex items-center justify-center gap-2 rounded-xl border border-[var(--line)] py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-white/5"
             >
-              <GithubIcon size={15} />
+              <spanIcon size={15} />
               GitHub Sponsors
             </button>
           </div>
