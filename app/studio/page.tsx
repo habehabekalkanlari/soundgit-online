@@ -57,8 +57,7 @@ function TimelinePlayer({ url, color, comments }: { url: string, color: string, 
     const onMeta = () => setDuration(audio.duration)
     const onEnd = () => setIsPlaying(false)
     audio.addEventListener('timeupdate', onTime); audio.addEventListener('loadedmetadata', onMeta); audio.addEventListener('ended', onEnd)
-    return (
-      <><LangBar />) => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('loadedmetadata', onMeta); audio.removeEventListener('ended', onEnd) }
+    return () => { audio.removeEventListener('timeupdate', onTime); audio.removeEventListener('loadedmetadata', onMeta); audio.removeEventListener('ended', onEnd) }
   }, [])
   useEffect(() => {
     const canvas = canvasRef.current; if (!canvas) return
@@ -273,6 +272,4 @@ export default function Studio() {
       </div>
     </div>
   )
-
-      </>
-)
+}
