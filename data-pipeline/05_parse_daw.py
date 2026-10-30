@@ -272,3 +272,28 @@ if __name__ == '__main__':
         with open(public_data / 'analytics.json', 'w') as out:
             json.dump(analytics, out, indent=2)
         print(f"✓ Saved {public_data / 'analytics.json'}")
+
+
+def score_collab(parsed):
+    name = (parsed.get('file','') + ' ' + ' '.join(parsed.get('stems',[]))).lower()
+    import hashlib
+    h = int(hashlib.md5(name.encode()).hexdigest()[:4], 16) % 100
+    bpm = parsed.get('bpm',128)
+    stems = parsed.get('stems',[])
+    vocal = 80 if 'vocal' in name else 40 + h % 30
+    energy = min(95, max(40, int((bpm-80)*1.2 + len(stems)*3 + h%15)))
+    groove = 78 + h%18 if bpm>=124 and bpm<=132 else 60 + h%30
+    drop = 75 + h%20 if 'drop' in name else 50 + h%35
+    bass = 82 if 'bass' in name else 45 + h%30
+    drums = 85 if 'kick' in name or 'drum' in name else 50 + h%30
+    clamp = lambda n: min(99,max(20,int(n)))
+    scores = dict(vocal=clamp(vocal), energy=clamp(energy), groove=clamp(groove), drop=clamp(drop), bass=clamp(bass), drums=clamp(drums))
+    scores['overall'] = sum(scores.values())//6
+    return scores
+
+# Add to parse_file
+_original_parse = parse_file
+def parse_file_with_collab(p):
+    r = _original_parse(p)
+    r['collab'] = score_collab(r)
+    return r

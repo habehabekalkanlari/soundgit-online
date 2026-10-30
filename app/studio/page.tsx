@@ -122,9 +122,14 @@ export default function Studio() {
     setUploadedFiles(prev => [...prev, ...files]);
     if (parsed.length > 0) {
       setParsedResults(prev => [...prev, ...parsed]);
+      const latest = parsed[parsed.length-1];
+      if (latest?.collab) setCollabScores(latest.collab);
       // Update transport BPM/Key from first parsed
       if (parsed[0]?.bpm) {
-        console.log('Parsed BPM:', parsed[0].bpm, 'Key:', parsed[0].key, 'Stems:', parsed[0].stems);
+        console.log('Parsed BPM:', parsed[0].bpm, 'Key:', parsed[0].key, 'Stems:', parsed[0].stems, 'Collab:', parsed[0].collab);
+        if (parsed[0].collab) {
+          setCollabScores(parsed[0].collab);
+        }
       }
     }
     // If audio file, create object URL and play
