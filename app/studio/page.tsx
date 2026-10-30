@@ -19,12 +19,18 @@ export default function Studio() {
   const [audioError, setAudioError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-    const savedLang = localStorage.getItem('soundgit_lang') as any;
-    if (savedLang) setLang(savedLang);
+    try {
+      setMounted(true);
+    } catch {}
+    try {
+      const savedLang = localStorage.getItem('soundgit_lang') as any;
+      if (savedLang) setLang(savedLang);
+    } catch(e) { console.log('lang error', e); setMounted(true); }
     
     // Fixed audio URL - public folder
     const audioUrl = '/audio/Casio-MT-45-16-Beat.wav';
+    // Also try absolute for vercel
+    console.log('Audio URL:', audioUrl);
     setUrl(audioUrl);
     
     // Check if file exists
@@ -98,7 +104,7 @@ export default function Studio() {
 
   const t = (tr: string, en: string) => lang==='tr'?tr:en;
 
-  if (!mounted) return <div className="min-h-screen bg-black text-white flex items-center justify-center font-mono text-[11px]">...</div>;
+  if (!mounted) return <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center font-mono text-[11px]">◍ Loading studio...</div>;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col select-none overflow-hidden">
