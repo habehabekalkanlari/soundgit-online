@@ -1,4 +1,6 @@
 "use client";
+import ScoreBoxAnalytics from "../components/ScoreBoxAnalytics";
+// injected from "../components/ScoreBoxAnalytics";
 import LFM3OmniAssistant from "../components/LFM3OmniAssistant";
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
@@ -275,3 +277,5 @@ export default function Studio() {
     </div>
   )
 }
+
+// <ScoreBoxAnalytics /> will be rendered in layout
